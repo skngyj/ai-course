@@ -33,3 +33,68 @@
 - 5번 (은행 / 은행나무, 0.602) — 글자가 같아서 헷갈릴 줄 알았는데 낮게 나왔다. "돈을 맡겼다"와 "강가에 앉았다"를 보고 다른 뜻이라고 구분한 것 같다.
 - 6번 (프로그램이 죽었다 / 프로세스 종료, 0.676) — 뜻이 같아서 높을 줄 알았는데 중간이었다. "죽었다"가 비유 표현이고 겹치는 단어도 없어서 확신이 약했던 것 같다.
 
+## 3주차: LLM의 동작 실험
+
+`week03/`에서 다음 내용을 실험했다.
+
+- Qwen3 모델의 토큰화와 한국어·영어 토큰 수 비교
+- Few-shot prompting과 시스템 프롬프트
+- 대화 이력에 따른 기억 동작
+- Chain-of-Thought와 답만 요청하는 방식 비교
+- temperature, 환각, 지식 컷오프, 컨텍스트 한계
+- 동조 현상과 log probability 확인
+- Ollama와 OpenAI 호환 API 호출
+
+## 4주차: LLM의 한계와 로컬 GPU
+
+`week04/`에서 LLM의 한계와 로컬 GPU 사용을 확인했다.
+
+- 환각, 지식 컷오프, 컨텍스트 오버플로우, 온도, 동조 실험
+- 시스템 프롬프트와 대화 기억 실험
+- 모델 크기와 4비트 양자화 기준 VRAM 계산
+- `nvidia-smi`, `ollama ps`로 GPU 상태 확인
+- `qwen3:8b`의 GPU 사용과 모델별 생성 속도 비교
+- RTX 4060에서 PyTorch CUDA 행렬 곱셈 실행
+- Cline을 이용한 할 일 목록과 계산기 프로젝트 제작
+
+계산기 프로젝트는 `week04/calc2/`의 테스트 20개를 모두 통과했다.
+
+## 5주차: LLM을 API로 다루기
+
+현재 직접 해보기 11까지 진행했다. `week05/`에는 다음 실습이 들어 있다.
+
+- `raw.py`: 표준 라이브러리로 Ollama HTTP API 직접 호출
+- `twoservers.py`: 로컬 Ollama와 실습 서버 비교
+- `sse.py`: OpenAI 호환 스트리밍 응답 수신
+- `chat.py`: 대화 이력과 초기화 명령이 있는 콘솔 챗봇
+- `jsonmode.py`: 모델 응답을 JSON으로 받아 파싱
+- `tools.py`: 시간·계산 도구 호출 반복문
+- `rag.py`: 임베딩 검색 결과와 생성을 연결하는 RAG 실험
+
+### 토스페이먼츠 직접 해보기 9~11
+
+`week05/toss/`에 토스페이먼츠 실습을 정리했다.
+
+- MCP를 이용한 토스페이먼츠 문서 검색 설정
+- `templates/index.html`: 주문서형 결제 위젯과 테스트 결제창
+- `templates/success.html`: 서버 결제 승인 결과 표시
+- `templates/fail.html`: 결제 실패·취소 결과 표시
+- `app.py`: 결제 금액 검증과 승인 API 호출 Flask 서버
+- `SPEC.md`: 결제 승인 서버 요구사항
+
+결제 승인 서버는 시크릿 키를 저장소에 넣지 않고 환경 변수에서 읽는다.
+
+```powershell
+cd week05\toss
+python -m pip install flask requests
+$env:TOSS_SECRET_KEY = "발급받은 테스트 시크릿 키"
+python app.py
+```
+
+브라우저에서 `http://localhost:5000`을 열어 테스트 결제를 진행한다. 결제 인증 결과가 `/success` 또는 `/fail`로 돌아오며, 실제 승인 API는 서버에서만 호출한다.
+
+### 아직 진행하지 않은 내용
+
+- Figma MCP 연결
+- 결제·디자인 결과 검증과 최종 저장소 정리
+

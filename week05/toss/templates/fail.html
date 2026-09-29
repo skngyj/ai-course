@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>결제 실패</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 24px 16px 48px; background: #f2f4f6; color: #191f28; font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif; }
+      .wrapper { max-width: 640px; margin: 0 auto; }
+      .box { margin-bottom: 16px; padding: 24px; background: #fff; border: 1px solid #e5e8eb; border-radius: 12px; }
+      h1 { margin: 0 0 16px; font-size: 20px; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { padding: 10px 8px; border-bottom: 1px solid #e5e8eb; text-align: left; vertical-align: top; }
+      th { width: 36%; font-size: 14px; }
+      td { font-family: Consolas, Menlo, monospace; font-size: 13px; word-break: break-all; }
+      .notice { color: #6b7684; font-size: 13px; line-height: 1.7; }
+      a { color: #3182f6; }
+    </style>
+  </head>
+  <body>
+    <main class="wrapper">
+      <section class="box">
+        <h1>결제 실패 또는 취소</h1>
+        <table>
+          <tr><th>코드</th><td>{{ code or "(없음)" }}</td></tr>
+          <tr><th>메시지</th><td>{{ message or "(없음)" }}</td></tr>
+          <tr><th>주문번호</th><td>{{ order_id or "(없음)" }}</td></tr>
+        </table>
+      </section>
+      <section class="box notice">
+        결제 인증이 실패하거나 사용자가 취소한 경우입니다. 이 경우 결제 승인 API를 호출하지 않습니다.
+      </section>
+      <p><a href="{{ url_for('index') }}">← 주문서로 돌아가기</a></p>
+    </main>
+  </body>
+</html>

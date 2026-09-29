@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>토스페이먼츠 테스트 결제</title>
+    <script src="https://js.tosspayments.com/v2/standard"></script>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 24px 16px 48px;
+        background: #f2f4f6;
+        color: #191f28;
+        font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "Segoe UI", sans-serif;
+      }
+      .wrapper { max-width: 640px; margin: 0 auto; }
+      .box {
+        margin-bottom: 16px;
+        padding: 24px;
+        background: #fff;
+        border: 1px solid #e5e8eb;
+        border-radius: 12px;
+      }
+      h1 { margin: 0 0 8px; font-size: 20px; }
+      .desc, .notice { color: #6b7684; font-size: 13px; line-height: 1.7; }
+      .desc { margin: 0 0 16px; }
+      .amount { font-weight: 700; }
+      .section-title { margin: 24px 0 8px; font-size: 14px; font-weight: 700; }
+      code { padding: 1px 4px; border-radius: 4px; background: #f2f4f6; font-size: 12px; }
+      #payment-button {
+        width: 100%;
+        margin-top: 28px;
+        padding: 14px;
+        border: 0;
+        border-radius: 8px;
+        background: #3182f6;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      #payment-button:disabled { background: #b0b8c1; cursor: default; }
+      .notice { padding: 14px 16px; background: #fff8e1; border: 1px solid #ffe9a8; border-radius: 12px; }
+      .error {
+        display: none;
+        margin-top: 16px;
+        padding: 14px 16px;
+        background: #fdecec;
+        border: 1px solid #f5b5b5;
+        border-radius: 8px;
+        color: #8b1e1e;
+        font-size: 13px;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="wrapper">
+      <section class="box">
+        <h1>주문서형 결제 테스트</h1>
+        <p class="desc">
+          TossPayments Standard v2 SDK로 결제수단과 약관 UI를 표시합니다.<br />
+          테스트 결제이므로 실제 청구는 발생하지 않습니다.
+        </p>
+        <p class="amount">결제 금액: {{ amount }}원</p>
+
+        <p class="section-title">결제수단</p>
+        <div id="payment-method"></div>
+
+        <p class="section-title">이용약관</p>
+        <div id="agreement"></div>
+
+        <button id="payment-button" type="button" disabled>결제 준비 중...</button>
+        <div id="error" class="error" role="alert"></div>
+      </section>
+
+      <aside class="notice" id="notice">
+        이 페이지는 결제 인증 결과를 <code>success.html</code> 또는 <code>fail.html</code>로 보여줍니다.
+        실제 결제 승인은 서버에서 시크릿 키로 처리해야 합니다.
+      </aside>
+    </main>
+
+    <script>
+      "use strict";
+
+      const CONFIG = Object.freeze({
+        clientKey: "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm",
+        amount: 1000,
+        orderName: "테스트 상품",
+      });
+
+      const button = document.querySelector("#payment-button");
+      const errorBox = document.querySelector("#error");
+
+      function showError(error) {
+        const code = error?.code ?? "-";
+        const message = error?.message ?? String(error);
+        errorBox.textContent = `요청에 실패했습니다.\ncode: ${code}\nmessage: ${message}`;
+        errorBox.style.display = "block";
+        button.disabled = false;
+        button.textContent = "다시 시도";
+      }
+
+      function createOrderId() {
+        const bytes = new Uint8Array(20);
+        crypto.getRandomValues(bytes);
+        return Array.from(bytes, (byte) => byte.toString(36).padStart(2, "0"))
+          .join("")
+          .slice(0, 40);
+      }
+
+      async function initializePayment() {
+        if (typeof TossPayments !== "function") {
+          throw new Error("토스페이먼츠 SDK를 불러오지 못했습니다. 인터넷 연결을 확인하세요.");
+        }
+
+        const tossPayments = TossPayments(CONFIG.clientKey);
+        const widgets = tossPayments.widgets({ customerKey: TossPayments.ANONYMOUS });
+
+        await widgets.setAmount({ currency: "KRW", value: CONFIG.amount });
+        await widgets.renderPaymentMethods({
+          selector: "#payment-method",
+          variantKey: "DEFAULT",
+        });
+        await widgets.renderAgreement({
+          selector: "#agreement",
+          variantKey: "AGREEMENT",
+        });
+
+        button.disabled = false;
+        button.textContent = "결제하기";
+        button.addEventListener("click", async () => {
+          button.disabled = true;
+          try {
+            await widgets.requestPayment({
+              orderId: createOrderId(),
+              orderName: CONFIG.orderName,
+              successUrl: new URL({{ url_for("success") | tojson }}, window.location.origin).toString(),
+              failUrl: new URL({{ url_for("fail") | tojson }}, window.location.origin).toString(),
+            });
+          } catch (error) {
+            showError(error);
+          }
+        });
+      }
+
+      if (window.location.protocol === "file:") {
+        document.querySelector("#notice").textContent =
+          "이 페이지는 Flask 서버에서 열어야 합니다. toss 폴더에서 " +
+          "python app.py를 실행한 뒤 http://localhost:5000으로 접속하세요.";
+      }
+
+      initializePayment().catch(showError);
+    </script>
+  </body>
+</html>

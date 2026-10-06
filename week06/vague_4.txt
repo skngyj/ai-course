@@ -1,0 +1,105 @@
+전화번호를 어떤 형식으로 정리하고 싶은지에 따라 여러 가지 방법이 있습니다. 가장 대표적인 세 가지 상황(하이픈 추가, 숫자만 추출, 특정 포맷으로 통일)에 대한 파이썬 함수를 만들어 드립니다.
+
+### 1. 숫자만 추출하기 (Cleaning)
+사용자가 `010-1234-5678`, `010.1234.5678`, `010 1234 5678` 등 어떤 식으로 입력해도 숫자만 골라내는 함수입니다. 데이터 전처리의 기본 단계입니다.
+
+```python
+import re
+
+def clean_phone_number(phone):
+    # 숫자가 아닌 모든 문자를 제거
+    return re.sub(r'[^0-9]', '', phone)
+
+# 테스트
+print(clean_phone_number("010-1234-5678"))  # 01012345678
+print(clean_phone_number("010.1234.5678"))  # 01012345678
+print(clean_phone_number("010 1234 5678"))  # 01012345678
+```
+
+---
+
+### 2. 하이픈(-)을 넣어 표준 형식으로 만들기 (Formatting)
+숫자만 있는 문자열을 받아서 `010-XXXX-XXXX` 형태로 예쁘게 만들어주는 함수입니다. 한국 전화번호의 길이에 따라 대응할 수 있도록 설계했습니다.
+
+```python
+def format_phone_number(phone):
+    # 1. 먼저 숫자만 남깁니다.
+    digits = re.sub(r'[^0-9]', '', phone)
+    
+    length = len(digits)
+    
+    # 2. 길이에 따라 형식을 지정합니다.
+    if length == 11: # 010-1234-5678
+        return f"{digits[:3]}-{digits[3:7]}-{digits[7:]}"
+    elif length == 10: # 02-123-4567 또는 010-123-4567
+        # 앞자리가 3자리인 경우 (예: 02, 031 등 지역번호)
+        if digits.startswith('02'):
+            return f"{digits[:2]}-{digits[2:5]}-{digits[5:]}"
+        else:
+            return f"{digits[:3]}-{digits[3:6]}-{digits[6:]}"
+    elif length == 8: # 1234-5678 (내선번호 등)
+        return f"{digits[:4]}-{digits[4:]}"
+    else:
+        return digits # 형식이 맞지 않으면 그냥 반환
+
+# 테스트
+print(format_phone_number("01012345678"))    # 010-1234-5678
+print(format_phone_number("021234567"))     # 02-123-4567
+print(format_phone_number("010-123-4567"))  # 010-123-4567
+```
+
+---
+
+### 3. 종합 선물 세트 (가장 추천하는 방식)
+실제 업무에서는 **"지저분한 입력을 받아서 -> 깨끗하게 만든 뒤 -> 정해진 포맷으로 출력"**하는 과정이 한 번에 필요합니다.
+
+```python
+import re
+
+def standardize_phone(phone):
+    """
+    입력된 전화번호를 숫자만 추출하여 000-0000-0000 형식으로 통일합니다.
+    """
+    if not phone:
+        return ""
+    
+    # 1. 숫자만 추출
+    digits = re.sub(r'[^0-9]', '', str(phone))
+    
+    # 2. 유효성 검사 (너무 짧거나 긴 경우)
+    if len(digits) < 8:
+        return "Invalid Number"
+
+    # 3. 패턴 적용 (길이별)
+    if len(digits) == 11:
+        return f"{digits[:3]}-{digits[3:7]}-{digits[7:]}"
+    elif len(digits) == 10:
+        if digits.startswith('02'):
+            return f"{digits[:2]}-{digits[2:5]}-{digits[5:]}"
+        else:
+            return f"{digits[:3]}-{digits[3:6]}-{digits[6:]}"
+    else:
+        # 그 외의 경우 (8자리 등)는 최대한 맞춰줌
+        return f"{digits[:-4]}-{digits[-4:]}"
+
+# 실전 테스트
+test_cases = [
+    "01012345678",
+    "010-1234-5678",
+    "02.123.4567",
+    "010 1234 5678",
+    "0101234567",
+    "123",           # 잘못된 번호
+    "021234567"      # 서울 지역번호
+]
+
+for case in test_cases:
+    print(f"{case}  =>  {standardize_phone(case)}")
+```
+
+### 코드 설명:
+1.  **`re.sub(r'[^0-9]', '', phone)`**: 정규표현식을 사용하여 숫자가 아닌 모든 문자(`^0-9`)를 빈 문자열(`''`)로 바꿉니다. 즉, 숫자만 남깁니다.
+2.  **슬라이싱 (`digits[:3]`)**: 문자열의 특정 위치를 잘라내는 파이썬의 강력한 기능입니다.
+3.  **조건문 (`if-elif`)**: 한국 전화번호의 특성(02는 2자리, 나머지는 3자리)을 반영하여 정확도를 높였습니다.
+
+원하시는 특정 형식이 따로 있다면(예: `+82 10...` 형태) 말씀해 주세요! 바로 수정해 드릴게요.
